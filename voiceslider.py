@@ -68,3 +68,7 @@ def listen():
         except Exception as e:
             print("Audio error:", e)
             break
+        
+def update_slider(volume):
+    slider.set(volume)
+    vol_label.config(text=f"Volume: {volume}")
