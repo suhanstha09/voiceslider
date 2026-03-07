@@ -17,3 +17,7 @@ stream = p.open(
     input=True,
     frames_per_buffer=CHUNK
 )
+root = tk.Tk()
+root.title("Voice Volume Slider")
+root.geometry("400x220")
+root.configure(bg="#1e1e2e")
