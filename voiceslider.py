@@ -37,3 +37,9 @@ slider = tk.Scale(
     highlightthickness=0, font=("Arial", 10)
 )
 slider.pack()
+
+vol_label = tk.Label(
+    root, text="Volume: 0",
+    bg="#1e1e2e", fg="#a0a0ff", font=("Arial", 12)
+)
+vol_label.pack(pady=10)
