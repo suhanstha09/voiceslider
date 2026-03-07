@@ -72,3 +72,6 @@ def listen():
 def update_slider(volume):
     slider.set(volume)
     vol_label.config(text=f"Volume: {volume}")
+    
+thread = threading.Thread(target=listen, daemon=True)
+thread.start()
