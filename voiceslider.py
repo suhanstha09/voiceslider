@@ -43,3 +43,9 @@ vol_label = tk.Label(
     bg="#1e1e2e", fg="#a0a0ff", font=("Arial", 12)
 )
 vol_label.pack(pady=10)
+
+hint = tk.Label(
+    root, text="Adjust MAX_VOLUME in code if slider feels off",
+    bg="#1e1e2e", fg="#555577", font=("Arial", 9)
+)
+hint.pack()
