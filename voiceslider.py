@@ -28,3 +28,12 @@ label = tk.Label(
     bg="#1e1e2e", fg="white", font=("Arial", 14)
 )
 label.pack(pady=20)
+
+slider = tk.Scale(
+    root, from_=0, to=100,
+    orient=tk.HORIZONTAL, length=320,
+    bg="#1e1e2e", fg="white",
+    troughcolor="#444", activebackground="#7c3aed",
+    highlightthickness=0, font=("Arial", 10)
+)
+slider.pack()
