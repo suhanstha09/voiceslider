@@ -21,3 +21,10 @@ root = tk.Tk()
 root.title("Voice Volume Slider")
 root.geometry("400x220")
 root.configure(bg="#1e1e2e")
+
+
+label = tk.Label(
+    root, text="🎤 Speak to control volume",
+    bg="#1e1e2e", fg="white", font=("Arial", 14)
+)
+label.pack(pady=20)
