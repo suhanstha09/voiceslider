@@ -49,3 +49,22 @@ hint = tk.Label(
     bg="#1e1e2e", fg="#555577", font=("Arial", 9)
 )
 hint.pack()
+
+def listen():
+    while True:
+        try:
+            data = stream.read(CHUNK, exception_on_overflow=False)
+            audio = np.frombuffer(data, dtype=np.int16)
+
+            # Calculate RMS loudness from raw audio
+            rms = int(np.sqrt(np.mean(audio.astype(np.float32) ** 2)))
+
+            # Map RMS → 0 to 100
+            volume = min(int((rms / MAX_VOLUME) * 100), 100)
+
+            # Safely update GUI from main thread
+            root.after(0, update_slider, volume)
+
+        except Exception as e:
+            print("Audio error:", e)
+            break
