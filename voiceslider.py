@@ -75,3 +75,6 @@ def update_slider(volume):
     
 thread = threading.Thread(target=listen, daemon=True)
 thread.start()
+
+root.mainloop()
+
