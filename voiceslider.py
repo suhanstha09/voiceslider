@@ -78,3 +78,6 @@ thread.start()
 
 root.mainloop()
 
+stream.stop_stream()
+stream.close()
+p.terminate()
