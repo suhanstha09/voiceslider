@@ -7,54 +7,66 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
+    <div class="ambient ambient-a"></div>
+    <div class="ambient ambient-b"></div>
 
-        <div class="header">
+    <main class="container">
+        <header class="header">
             <div class="title-block">
-         <h1>VOICE MONITOR</h1>
-         <p>REAL-TIME MIC INPUT → VOLUME CONTROL</p>
-             </div>
-        </div>
+                <h1>VOICE MONITOR</h1>
+                <p>REAL-TIME MIC INPUT TO VOLUME CONTROL</p>
+            </div>
+
+            <div class="mic-icon" id="micIcon" aria-hidden="true">
+                <div class="mic-dot"></div>
+            </div>
+        </header>
 
         <div class="status">
       <div class="status-dot" id="statusDot"></div>
-     </div>
-
-      <div class="vol-display">
-      <div class="vol-number" id="volNumber">00</div>
-      <div class="vol-unit">SIGNAL LEVEL</div>
-      </div>
-     <div class="slider-wrap">
-        <div class="slider-labels">
-            <span>SILENT</span>
-            <span>LOW</span>
-            <span>MID</span>
-            <span>HIGH</span>
-            <span>MAX</span>
+            <div class="status-text" id="status-text">INITIALIZING</div>
         </div>
 
-         <div class="track">
+        <section class="vol-display">
+      <div class="vol-number" id="volNumber">00</div>
+      <div class="vol-unit">SIGNAL LEVEL</div>
+        </section>
+
+        <section class="slider-wrap">
+            <div class="slider-labels">
+                <span>SILENT</span>
+                <span>LOW</span>
+                <span>MID</span>
+                <span>HIGH</span>
+                <span>MAX</span>
+            </div>
+
+            <div class="track">
         <div class="fill" id="fill"></div>
       </div>
       <div class="ticks" id="ticks"></div>
-      
-     </div>
 
-     <div class="waveform" id="waveform"></div>
+            <div class="noise-floor-row">
+                <span>NOISE FLOOR</span>
+                <span id="noiseFloorVal">00</span>
+            </div>
+        </section>
 
-     <div class="info-row">
+        <section class="waveform" id="waveform"></section>
+
+        <section class="info-row">
       <div class="info-item">PEAK &nbsp;<span id="peakVal">00</span></div>
       <div class="info-item">AVG &nbsp;<span id="avgVal">00</span></div>
       <div class="info-item">UPDATES/S &nbsp;<span id="rateVal">--</span></div>
-     </div>
+        </section>
 
-      <div id="error-msg">
-      ⚠ CANNOT CONNECT TO SERVER<br>
-      Make sure <strong>voiceslider.py</strong> is running:<br>
-      <code>python voiceslider.py</code>
+        <div id="error-msg">
+            MICROPHONE ACCESS FAILED.<br>
+            Allow microphone permission and reload this page.<br>
+            HTTPS or localhost is required in most browsers.
     </div>
+    </main>
 
-    </div>
     <script src="script.js"></script>
 </body>
 </html>
