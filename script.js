@@ -15,3 +15,13 @@ for (let i = 0; i <= 20; i++) {
   t.className = 'tick' + (i % 5 === 0 ? ' major' : '');
   ticksEl.appendChild(t);
 }
+
+const BAR_COUNT = 32;
+const bars = [];
+
+for (let i = 0; i < BAR_COUNT; i++) {
+  const b = document.createElement('div');
+  b.className = 'bar';
+  waveform.appendChild(b);
+  bars.push(b);
+}
