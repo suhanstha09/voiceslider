@@ -12,11 +12,16 @@ const ticksEl = document.getElementById('ticks');
 const noiseFloorVal = document.getElementById('noiseFloorVal');
 
 const BAR_COUNT = 32;
-const CALIBRATION_FRAMES = 45;
-const NOISE_MARGIN = 0.02;
+const CALIBRATION_FRAMES = 70;
+const NOISE_MARGIN = 0.028;
 const NOISE_ADAPT_ALPHA = 0.03;
-const ATTACK_ALPHA = 0.42;
-const RELEASE_ALPHA = 0.12;
+const ATTACK_ALPHA = 0.35;
+const RELEASE_ALPHA = 0.09;
+const RMS_SCALE = 0.22;
+const SNR_OPEN_DB = 9;
+const SNR_CLOSE_DB = 5;
+const BAND_RATIO_OPEN = 0.56;
+const BAND_RATIO_CLOSE = 0.48;
 
 const bars = [];
 let peak = 0;
@@ -26,6 +31,8 @@ let waveHistory = new Array(BAR_COUNT).fill(0);
 let noiseFloor = 0;
 let smoothLevel = 0;
 let calibratingFrames = 0;
+let speechBandNoise = 0;
+let gateOpen = false;
 
 for (let i = 0; i <= 20; i += 1) {
   const tick = document.createElement('div');
@@ -132,10 +139,30 @@ function measureRms(timeDomainArray) {
   return Math.sqrt(sumSquares / timeDomainArray.length);
 }
 
-function processLevel(rms) {
+function hzToBin(freqHz, sampleRate, fftSize) {
+  const nyquist = sampleRate / 2;
+  return Math.round((freqHz / nyquist) * (fftSize / 2));
+}
+
+function sumBandEnergy(freqData, startBin, endBin) {
+  let sum = 0;
+
+  for (let i = startBin; i <= endBin; i += 1) {
+    const db = Number.isFinite(freqData[i]) ? freqData[i] : -120;
+    const linear = 10 ** (db / 10);
+    sum += linear;
+  }
+
+  return sum;
+}
+
+function processLevel(rms, speechBandPower, fullBandPower) {
   if (calibratingFrames < CALIBRATION_FRAMES) {
     calibratingFrames += 1;
     noiseFloor = noiseFloor === 0 ? rms : (noiseFloor * 0.9) + (rms * 0.1);
+    speechBandNoise = speechBandNoise === 0
+      ? speechBandPower
+      : (speechBandNoise * 0.92) + (speechBandPower * 0.08);
     setStatus('calibrating');
     applyVolume(0);
     return;
@@ -145,11 +172,31 @@ function processLevel(rms) {
     noiseFloor = ((1 - NOISE_ADAPT_ALPHA) * noiseFloor) + (NOISE_ADAPT_ALPHA * rms);
   }
 
+  if (!gateOpen) {
+    speechBandNoise = ((1 - NOISE_ADAPT_ALPHA) * speechBandNoise) + (NOISE_ADAPT_ALPHA * speechBandPower);
+  }
+
+  const bandRatio = speechBandPower / Math.max(fullBandPower, 1e-10);
+  const snrDb = 10 * Math.log10((speechBandPower + 1e-12) / (speechBandNoise + 1e-12));
+
+  if (!gateOpen) {
+    gateOpen = snrDb >= SNR_OPEN_DB && bandRatio >= BAND_RATIO_OPEN && rms > noiseFloor + NOISE_MARGIN;
+  } else {
+    gateOpen = snrDb >= SNR_CLOSE_DB && bandRatio >= BAND_RATIO_CLOSE && rms > noiseFloor + (NOISE_MARGIN * 0.5);
+  }
+
+  if (!gateOpen) {
+    smoothLevel *= 0.86;
+    applyVolume(0);
+    setStatus('live');
+    return;
+  }
+
   const speech = Math.max(0, rms - (noiseFloor + NOISE_MARGIN));
   const alpha = speech > smoothLevel ? ATTACK_ALPHA : RELEASE_ALPHA;
   smoothLevel = ((1 - alpha) * smoothLevel) + (alpha * speech);
 
-  const normalized = clamp((smoothLevel / 0.28) * 100, 0, 100);
+  const normalized = clamp((smoothLevel / RMS_SCALE) * 100, 0, 100);
   applyVolume(Math.round(normalized));
   setStatus('live');
 }
@@ -166,18 +213,42 @@ async function startMicrophone() {
 
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     const source = audioContext.createMediaStreamSource(stream);
+
+    // Band-limit before analysis to emphasize voice and suppress low/high noise.
+    const highpass = audioContext.createBiquadFilter();
+    highpass.type = 'highpass';
+    highpass.frequency.value = 100;
+    highpass.Q.value = 0.7;
+
+    const lowpass = audioContext.createBiquadFilter();
+    lowpass.type = 'lowpass';
+    lowpass.frequency.value = 4200;
+    lowpass.Q.value = 0.7;
+
     const analyser = audioContext.createAnalyser();
     analyser.fftSize = 1024;
     analyser.smoothingTimeConstant = 0.45;
 
-    source.connect(analyser);
+    source.connect(highpass);
+    highpass.connect(lowpass);
+    lowpass.connect(analyser);
 
     const timeData = new Uint8Array(analyser.fftSize);
+    const freqData = new Float32Array(analyser.frequencyBinCount);
+    const speechStartBin = hzToBin(120, audioContext.sampleRate, analyser.fftSize);
+    const speechEndBin = hzToBin(3400, audioContext.sampleRate, analyser.fftSize);
+    const fullStartBin = hzToBin(60, audioContext.sampleRate, analyser.fftSize);
+    const fullEndBin = hzToBin(7000, audioContext.sampleRate, analyser.fftSize);
 
     const loop = () => {
       analyser.getByteTimeDomainData(timeData);
+      analyser.getFloatFrequencyData(freqData);
+
       const rms = measureRms(timeData);
-      processLevel(rms);
+      const speechBandPower = sumBandEnergy(freqData, speechStartBin, speechEndBin);
+      const fullBandPower = sumBandEnergy(freqData, fullStartBin, fullEndBin);
+
+      processLevel(rms, speechBandPower, fullBandPower);
       requestAnimationFrame(loop);
     };
 
