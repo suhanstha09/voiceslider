@@ -32,3 +32,15 @@
   font-family: 'Orbitron', sans-serif;
   font-size: 12px;
 }
+
+#error-msg {
+  display: none;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--red);
+  background: rgba(255, 60, 95, 0.05);
+  font-size: 11px;
+  color: var(--red);
+  letter-spacing: 0.06em;
+  line-height: 1.7;
+}
