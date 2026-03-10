@@ -9,3 +9,9 @@ const rateVal    = document.getElementById('rateVal');
 const errorMsg   = document.getElementById('error-msg');
 const waveform   = document.getElementById('waveform');
 const ticksEl    = document.getElementById('ticks');
+
+for (let i = 0; i <= 20; i++) {
+  const t = document.createElement('div');
+  t.className = 'tick' + (i % 5 === 0 ? ' major' : '');
+  ticksEl.appendChild(t);
+}
