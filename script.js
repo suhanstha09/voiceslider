@@ -12,16 +12,18 @@ const ticksEl = document.getElementById('ticks');
 const noiseFloorVal = document.getElementById('noiseFloorVal');
 
 const BAR_COUNT = 32;
-const CALIBRATION_FRAMES = 70;
-const NOISE_MARGIN = 0.028;
+const CALIBRATION_FRAMES = 45;
+const NOISE_MARGIN = 0.02;
 const NOISE_ADAPT_ALPHA = 0.03;
-const ATTACK_ALPHA = 0.35;
-const RELEASE_ALPHA = 0.09;
-const RMS_SCALE = 0.22;
-const SNR_OPEN_DB = 9;
-const SNR_CLOSE_DB = 5;
-const BAND_RATIO_OPEN = 0.56;
-const BAND_RATIO_CLOSE = 0.48;
+const ATTACK_ALPHA = 0.42;
+const RELEASE_ALPHA = 0.11;
+const RMS_SCALE = 0.18;
+const SNR_OPEN_DB = 5;
+const SNR_CLOSE_DB = 2;
+const BAND_RATIO_OPEN = 0.44;
+const BAND_RATIO_CLOSE = 0.36;
+const RMS_FALLBACK_OPEN = 1.8;
+const RMS_FALLBACK_CLOSE = 1.35;
 
 const bars = [];
 let peak = 0;
@@ -179,10 +181,16 @@ function processLevel(rms, speechBandPower, fullBandPower) {
   const bandRatio = speechBandPower / Math.max(fullBandPower, 1e-10);
   const snrDb = 10 * Math.log10((speechBandPower + 1e-12) / (speechBandNoise + 1e-12));
 
+  const rmsOverNoise = rms / Math.max(noiseFloor + NOISE_MARGIN, 1e-8);
+  const spectralOpen = snrDb >= SNR_OPEN_DB && bandRatio >= BAND_RATIO_OPEN;
+  const spectralClose = snrDb >= SNR_CLOSE_DB && bandRatio >= BAND_RATIO_CLOSE;
+  const rmsOpen = rmsOverNoise >= RMS_FALLBACK_OPEN;
+  const rmsClose = rmsOverNoise >= RMS_FALLBACK_CLOSE;
+
   if (!gateOpen) {
-    gateOpen = snrDb >= SNR_OPEN_DB && bandRatio >= BAND_RATIO_OPEN && rms > noiseFloor + NOISE_MARGIN;
+    gateOpen = (spectralOpen || rmsOpen) && rms > noiseFloor + NOISE_MARGIN;
   } else {
-    gateOpen = snrDb >= SNR_CLOSE_DB && bandRatio >= BAND_RATIO_CLOSE && rms > noiseFloor + (NOISE_MARGIN * 0.5);
+    gateOpen = (spectralClose || rmsClose) && rms > noiseFloor + (NOISE_MARGIN * 0.35);
   }
 
   if (!gateOpen) {
