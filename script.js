@@ -17,7 +17,7 @@ const NOISE_MARGIN = 0.02;
 const NOISE_ADAPT_ALPHA = 0.03;
 const ATTACK_ALPHA = 0.42;
 const RELEASE_ALPHA = 0.11;
-const RMS_SCALE = 0.18;
+const RMS_SCALE = 0.35;
 const SNR_OPEN_DB = 5;
 const SNR_CLOSE_DB = 2;
 const BAND_RATIO_OPEN = 0.44;
@@ -204,7 +204,8 @@ function processLevel(rms, speechBandPower, fullBandPower) {
   const alpha = speech > smoothLevel ? ATTACK_ALPHA : RELEASE_ALPHA;
   smoothLevel = ((1 - alpha) * smoothLevel) + (alpha * speech);
 
-  const normalized = clamp((smoothLevel / RMS_SCALE) * 100, 0, 100);
+  // Soft-knee mapping avoids slamming to 100 for normal/quiet speech.
+  const normalized = clamp((smoothLevel / (RMS_SCALE + smoothLevel)) * 135, 0, 100);
   applyVolume(Math.round(normalized));
   setStatus('live');
 }
@@ -215,7 +216,7 @@ async function startMicrophone() {
       audio: {
         noiseSuppression: true,
         echoCancellation: true,
-        autoGainControl: true
+        autoGainControl: false
       }
     });
 
