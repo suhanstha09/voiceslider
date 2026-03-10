@@ -26,3 +26,9 @@
   letter-spacing: 0.08em;
 }
 
+
+.info-item span {
+  color: var(--cyan);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+}
